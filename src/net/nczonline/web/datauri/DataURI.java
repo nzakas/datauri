@@ -103,11 +103,14 @@ public class DataURI {
                 out = new OutputStreamWriter(new FileOutputStream(outputFilename), charset);
             }            
             
+            //set verbose option
+            DataURIGenerator.setVerbose(verbose);
+            
             //determine if the filename is a local file or a URL
             if (inputFilename.startsWith("http://")){
-                DataURIGenerator.generate(new URL(inputFilename), out, mimeType, charset, verbose);
+                DataURIGenerator.generate(new URL(inputFilename), out, mimeType, charset);
             } else {
-                DataURIGenerator.generate(new File(inputFilename), out, mimeType, charset, verbose);
+                DataURIGenerator.generate(new File(inputFilename), out, mimeType, charset);
             }          
             
         } catch (CmdLineParser.OptionException e) {

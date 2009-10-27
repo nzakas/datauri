@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
-import org.apache.commons.codec.binary.Base64;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -44,6 +43,7 @@ public class DataURIGenerator {
 
     private static HashMap imageTypes = new HashMap();
     private static HashMap textTypes = new HashMap();
+    private static boolean verbose = false;
  
     //initialize file types and MIME types
     static {        
@@ -62,6 +62,18 @@ public class DataURIGenerator {
     }    
     
     //--------------------------------------------------------------------------
+    // Get/Set verbose flag
+    //--------------------------------------------------------------------------    
+    
+    public static boolean getVerbose(){
+        return verbose;
+    }
+    
+    public static void setVerbose(boolean newVerbose){
+        verbose = newVerbose;
+    }
+    
+    //--------------------------------------------------------------------------
     // Generate data URIs from a file
     //--------------------------------------------------------------------------
     
@@ -73,19 +85,7 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */ 
     public static void generate(File file, Writer out) throws IOException {
-        generate(file, out, null, false);        
-    }
-    
-    /**
-     * Generates a data URI from a file, outputting it to the given writer. The
-     * MIME type is determined from examining the filename.
-     * @param file The file from which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param verbose Whether to display additional information.
-     * @throws java.io.IOException
-     */    
-    public static void generate(File file, Writer out, boolean verbose) throws IOException {
-        generate(file, out, null, verbose);        
+        generate(file, out, null);        
     }
     
     /**
@@ -96,19 +96,7 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */    
     public static void generate(File file, Writer out, String mimeType) throws IOException {
-        generate(file, out, null, null, false);        
-    }
-    
-    /**
-     * Generates a data URI from a file, outputting it to the given writer.
-     * @param file The file from which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param mimeType The MIME type to use for the data URI.
-     * @param verbose Whether to display additional information.
-     * @throws java.io.IOException
-     */    
-    public static void generate(File file, Writer out, String mimeType, boolean verbose) throws IOException {
-        generate(file, out, null, null, verbose);        
+        generate(file, out, null, null);        
     }
     
     /**
@@ -120,20 +108,7 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */    
     public static void generate(File file, Writer out, String mimeType, String charset) throws IOException {
-        generate(file, out, mimeType, charset, false);
-    }
-
-    /**
-     * Generates a data URI from a file, outputting it to the given writer.
-     * @param file The file from which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param mimeType The MIME type to use for the data URI.
-     * @param charset The charset to use for the data URI.
-     * @param verbose Whether to display additional information.
-     * @throws java.io.IOException
-     */
-    public static void generate(File file, Writer out, String mimeType, String charset, boolean verbose) throws IOException {
-        generateDataURI(file, out, mimeType, charset, verbose);
+        generateDataURI(file, out, mimeType, charset);
     }
   
     //--------------------------------------------------------------------------
@@ -148,19 +123,7 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */ 
     public static void generate(URL url, Writer out) throws IOException {
-        generate(url, out, null, false);        
-    }
-    
-    /**
-     * Generates a data URI from a URL, outputting it to the given writer. The
-     * MIME type is determined from examining the filename.
-     * @param url The URL form which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param verbose Whether to display additional information.
-     * @throws java.io.IOException
-     */    
-    public static void generate(URL url, Writer out, boolean verbose) throws IOException {
-        generate(url, out, null, verbose);        
+        generate(url, out, null);        
     }
     
     /**
@@ -171,19 +134,7 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */    
     public static void generate(URL url, Writer out, String mimeType) throws IOException {
-        generate(url, out, null, null, false);        
-    }
-    
-    /**
-     * Generates a data URI from a URL, outputting it to the given writer.
-     * @param url The URL form which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param mimeType The MIME type to use for the data URI.
-     * @param verbose Whether to display additional information.
-     * @throws java.io.IOException
-     */    
-    public static void generate(URL url, Writer out, String mimeType, boolean verbose) throws IOException {
-        generate(url, out, null, null, verbose);        
+        generate(url, out, null, null);        
     }
     
     /**
@@ -195,21 +146,8 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */    
     public static void generate(URL url, Writer out, String mimeType, String charset) throws IOException {
-        generate(url, out, mimeType, charset, false);
+        generateDataURI(url, out, mimeType, charset);
     }    
-    
-    /**
-     * Generates a data URI from a URL, outputting it to the given writer.
-     * @param url The URL form which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param mimeType The MIME type to use for the data URI.
-     * @param charset The charset to use for the data URI.
-     * @param verbose Whether to display additional information.
-     * @throws java.io.IOException
-     */
-    public static void generate(URL url, Writer out, String mimeType, String charset, boolean verbose) throws IOException {        
-        generateDataURI(url, out, mimeType, charset, verbose);
-    }
     
     //--------------------------------------------------------------------------
     // Helper methods
@@ -223,7 +161,7 @@ public class DataURIGenerator {
      * @param charset The character set to specify in the data URI.
      * @throws java.io.IOException
      */
-    private static void generateDataURI(File file, Writer out, String mimeType, String charset, boolean verbose) throws IOException{
+    private static void generateDataURI(File file, Writer out, String mimeType, String charset) throws IOException{
         
         //read the bytes from the file
         InputStream in = new FileInputStream(file);
@@ -232,11 +170,11 @@ public class DataURIGenerator {
         in.close();  
         
         //verify MIME type and charset
-        mimeType = getMimeType(file.getName(), mimeType, verbose);
-        charset = getCharsetForFilename(file.getName(), charset, verbose);        
+        mimeType = getMimeType(file.getName(), mimeType);
+        charset = getCharsetForFilename(file.getName(), charset);        
         
         //actually write
-        generateDataURI(bytes, out, mimeType, charset, verbose);        
+        generateDataURI(bytes, out, mimeType, charset);        
     }
 
     /**
@@ -247,14 +185,14 @@ public class DataURIGenerator {
      * @param charset The character set to specify in the data URI.
      * @throws java.io.IOException
      */
-    private static void generateDataURI(URL url, Writer out, String mimeType, String charset, boolean verbose) throws IOException{
+    private static void generateDataURI(URL url, Writer out, String mimeType, String charset) throws IOException{
         
         //get information about the URL
         URLConnection conn = url.openConnection();
         
         //if no MIME type has been specified, get from the connection
         if (mimeType == null){            
-            mimeType = getMimeType(url.getFile(), conn.getContentType(), verbose);
+            mimeType = getMimeType(url.getFile(), conn.getContentType());
             if (verbose){
                 System.err.println("[INFO] No MIME type provided, using '" + mimeType + "'.");
             }            
@@ -279,7 +217,7 @@ public class DataURIGenerator {
         }
         
         //verify charset
-        charset = getCharsetForMIMEType(mimeType, charset, verbose);
+        charset = getCharsetForMIMEType(mimeType, charset);
         
         //read the bytes from the URL
         InputStream in = conn.getInputStream();       
@@ -294,7 +232,7 @@ public class DataURIGenerator {
         in.close();        
         
         //actually write
-        generateDataURI(byteStream.toByteArray(), out, mimeType, charset, verbose);        
+        generateDataURI(byteStream.toByteArray(), out, mimeType, charset);        
     }
 
     /**
@@ -305,7 +243,7 @@ public class DataURIGenerator {
      * @param charset The character set to specify in the data URI.
      * @throws java.io.IOException
      */
-    private static void generateDataURI(byte[] bytes, Writer out, String mimeType, String charset, boolean verbose) throws IOException {
+    private static void generateDataURI(byte[] bytes, Writer out, String mimeType, String charset) throws IOException {
         
         //create the output
         StringBuffer buffer = new StringBuffer();        
@@ -321,7 +259,7 @@ public class DataURIGenerator {
         
         //output base64-encoding
         buffer.append(";base64,");
-        buffer.append(new String(Base64.encodeBase64(bytes)));
+        buffer.append(new String(Base64.encodeBytes(bytes)));
         
         //output to writer
         out.write(buffer.toString());        
@@ -358,11 +296,10 @@ public class DataURIGenerator {
      * is inspected to determine the appropriate MIME type.
      * @param filename The filename to check.
      * @param mimeType The provided MIME type or null if nothing was provided.
-     * @param verbose Whether or not to display additional information
      * @return The MIME type string to use for the filename.
      * @throws java.io.IOException When no MIME type can be determined.
      */
-    private static String getMimeType(String filename, String mimeType, boolean verbose) throws IOException {
+    private static String getMimeType(String filename, String mimeType) throws IOException {
         if (mimeType == null){
             
             String type = getFileType(filename);
@@ -390,10 +327,9 @@ public class DataURIGenerator {
      * image, this method always returns null because no charset should be used.
      * @param filename The filename to check. 
      * @param charset The provided charset.
-     * @param verbose Whether or not to display additional information.
      * @return The charset string or null if no charset should be used.
      */
-    private static String getCharsetForFilename(String filename, String charset, boolean verbose) {
+    private static String getCharsetForFilename(String filename, String charset) {
         if (charset != null){
             
             if (Charset.isSupported(charset)){
@@ -426,7 +362,7 @@ public class DataURIGenerator {
         return charset;
     }
     
-    private static String getCharsetForMIMEType(String mimeType, String charset, boolean verbose){
+    private static String getCharsetForMIMEType(String mimeType, String charset){
         if (charset != null){
             
             if (Charset.isSupported(charset)){

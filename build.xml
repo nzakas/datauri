@@ -20,10 +20,9 @@
                includes="**/*.java"
                deprecation="off"
                debug="on"
-               source="1.4">
+               source="1.5">
             <classpath>
                 <pathelement location="${lib.dir}/jargs-1.0.jar"/>
-                <pathelement location="${lib.dir}/commons-codec-1.4.jar" />
             </classpath>
         </javac>
     </target>
@@ -31,7 +30,6 @@
     <target name="build.jar" depends="build.classes">
         <mkdir dir="${build.dir}/jar"/>
         <unjar src="${lib.dir}/jargs-1.0.jar" dest="${build.dir}/jar"/>
-        <unjar src="${lib.dir}/commons-codec-1.4.jar" dest="${build.dir}/jar"/>
         <copy todir="${build.dir}/jar">
             <fileset dir="${build.dir}/classes" includes="**/*.class"/>
         </copy>
