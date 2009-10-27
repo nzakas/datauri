@@ -27,8 +27,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
+import java.net.URL;
 
 
 public class DataURI {    
@@ -80,21 +80,19 @@ public class DataURI {
             
             //need to have at least one file
             if (fileArgs.length == 0){
-                System.err.println("No files specified.");
+                System.err.println("[ERROR] No files specified.");
                 System.exit(1);
             }
             
             //only the first filename is used
-            String inputFilename = fileArgs[0];
-
-            
+            String inputFilename = fileArgs[0];            
                                   
             //get output filename
             outputFilename = (String) parser.getOptionValue(outputFilenameOpt);
             
             if (outputFilename == null) {
                 if (verbose){
-                    System.err.println("[INFO] Not output file specified, defaulting to stdout.");
+                    System.err.println("[INFO] No output file specified, defaulting to stdout.");
                 }                
                 
                 out = new OutputStreamWriter(System.out);
@@ -105,8 +103,12 @@ public class DataURI {
                 out = new OutputStreamWriter(new FileOutputStream(outputFilename), charset);
             }            
             
-            //generate
-            DataURIGenerator.generate(new File(inputFilename), out, mimeType, charset, verbose);
+            //determine if the filename is a local file or a URL
+            if (inputFilename.startsWith("http://")){
+                DataURIGenerator.generate(new URL(inputFilename), out, mimeType, charset, verbose);
+            } else {
+                DataURIGenerator.generate(new File(inputFilename), out, mimeType, charset, verbose);
+            }          
             
         } catch (CmdLineParser.OptionException e) {
             usage();
