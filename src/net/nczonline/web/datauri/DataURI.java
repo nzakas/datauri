@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009 Nicholas C. Zakas. All rights reserved.
+ * http://www.nczonline.net/
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +23,13 @@
 package net.nczonline.web.datauri;
 
 import jargs.gnu.CmdLineParser;
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 
-/*
- * This file heavily inspired and based on YUI Compressor.
- * http://github.com/yui/yuicompressor
- */
 
 public class DataURI {    
 
@@ -43,10 +44,7 @@ public class DataURI {
         String charset = null;
         String outputFilename = null;
         Writer out = null;
-        Reader in = null;
         String mimeType = null;
-        String inputCharset = null;
-
         
         //initialize command line parser
         CmdLineParser parser = new CmdLineParser();
@@ -86,48 +84,35 @@ public class DataURI {
                 System.exit(1);
             }
             
+            //only the first filename is used
             String inputFilename = fileArgs[0];
-            //inputCharset = DataURIGenerator.getCharset(inputFilename, charset);
-           
-//            if (DataURIGenerator.isImageFile(inputFilename)){
-//                if (verbose){
-//                    System.err.println("[INFO] Image file detecting, not using specified charset.");
-//                }
-//                in = new InputStreamReader(new FileInputStream(inputFilename));
-//            } else {
-//                in = new InputStreamReader(new FileInputStream(inputFilename), inputCharset);
-//            }
+
             
                                   
             //get output filename
             outputFilename = (String) parser.getOptionValue(outputFilenameOpt);
             
             if (outputFilename == null) {
-                if (charset == null){
-                    out = new OutputStreamWriter(System.out);
-                } else {
-                    out = new OutputStreamWriter(System.out, charset);
-                }
+                if (verbose){
+                    System.err.println("[INFO] Not output file specified, defaulting to stdout.");
+                }                
+                
+                out = new OutputStreamWriter(System.out);
             } else {
                 if (verbose){
                     System.err.println("[INFO] Output file is '" + (new File(outputFilename)).getAbsolutePath() + "'");
                 }
                 out = new OutputStreamWriter(new FileOutputStream(outputFilename), charset);
             }            
-
-
-            
-            //close just in case out is the same as in
-            //in.close(); in = null;
             
             //generate
             DataURIGenerator.generate(new File(inputFilename), out, mimeType, charset, verbose);
+            
         } catch (CmdLineParser.OptionException e) {
             usage();
             System.exit(1);            
         } catch (Exception e) { 
             e.printStackTrace();
-            System.err.println(e.getMessage());
             System.exit(1);
         } finally {
             if (out != null) {
@@ -141,17 +126,16 @@ public class DataURI {
         
     }
     
-
     /**
      * Outputs help information to the console.
      */
     private static void usage() {
         System.out.println(
-                "\nUsage: java -jar combiner-x.y.z.jar [options] [input files]\n\n"
+                "\nUsage: java -jar datauri-x.y.z.jar [options] [input files]\n\n"
 
                         + "Global Options\n"
                         + "  -h, --help            Displays this information.\n"
-                        + "  --charset <charset>   Read the input file and write data URI using <charset>.\n"
+                        + "  --charset <charset>   Character set to encode into the data URI.\n"
                         + "  -v, --verbose         Display informational messages and warnings.\n"
                         + "  -m, --mime <type>     Mime type to encode into the data URI.\n"
                         + "  -o <file>             Place the output into <file>. Defaults to stdout.");

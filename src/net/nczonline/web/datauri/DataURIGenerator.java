@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009 Nicholas C. Zakas. All rights reserved.
+ * http://www.nczonline.net/
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +23,26 @@
  
 package net.nczonline.web.datauri;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashMap;
 import org.apache.commons.codec.binary.Base64;
-import java.awt.image. BufferedImage;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.Charset;
-import javax.imageio.ImageIO;
 
-
+/**
+ * Generator for Data URIs.
+ * @author Nicholas C. Zakas
+ */
 public class DataURIGenerator {
  
 
     private static HashMap imageTypes = new HashMap();
     private static HashMap textTypes = new HashMap();
  
+    //initialize file types and MIME types
     static {        
         imageTypes.put("gif", "image/gif");
         imageTypes.put("jpg", "image/jpeg");
@@ -59,44 +58,100 @@ public class DataURIGenerator {
         textTypes.put("txt", "text/plain");
     }    
     
-
-    public static void generate(File file, Writer out, boolean verbose) throws IOException, UnsupportedCharsetException {
+    //--------------------------------------------------------------------------
+    // Generate data URIs from a file
+    //--------------------------------------------------------------------------
+    
+    /**
+     * Generates a data URI from a file, outputting it to the given writer. The
+     * MIME type is determined from examining the filename.
+     * @param file The file from which to generate the data URI.
+     * @param out Where to output the data URI.
+     * @throws java.io.IOException
+     */ 
+    public static void generate(File file, Writer out) throws IOException {
+        generate(file, out, null, false);        
+    }
+    
+    /**
+     * Generates a data URI from a file, outputting it to the given writer. The
+     * MIME type is determined from examining the filename.
+     * @param file The file from which to generate the data URI.
+     * @param out Where to output the data URI.
+     * @param verbose Whether to display additional information.
+     * @throws java.io.IOException
+     */    
+    public static void generate(File file, Writer out, boolean verbose) throws IOException {
         generate(file, out, null, verbose);        
     }
     
-    public static void generate(File file, Writer out, String mimeType, boolean verbose) throws IOException, UnsupportedCharsetException {
+    /**
+     * Generates a data URI from a file, outputting it to the given writer.
+     * @param file The file from which to generate the data URI.
+     * @param out Where to output the data URI.
+     * @param mimeType The MIME type to use for the data URI.
+     * @throws java.io.IOException
+     */    
+    public static void generate(File file, Writer out, String mimeType) throws IOException {
+        generate(file, out, null, null, false);        
+    }
+    
+    /**
+     * Generates a data URI from a file, outputting it to the given writer.
+     * @param file The file from which to generate the data URI.
+     * @param out Where to output the data URI.
+     * @param mimeType The MIME type to use for the data URI.
+     * @param verbose Whether to display additional information.
+     * @throws java.io.IOException
+     */    
+    public static void generate(File file, Writer out, String mimeType, boolean verbose) throws IOException {
         generate(file, out, null, null, verbose);        
     }
     
-    public static void generate(File file, Writer out, String mimeType, String charset, boolean verbose) throws IOException, UnsupportedCharsetException {
-        //if (isImageFile(file.getName())){
-        //    generateImage(file, out, mimeType, verbose);
-        //} else {
-        //    generateText(file, out, mimeType, charset, verbose);
-        //}
-        generateDataURI(file, out, getMimeType(file.getName(), mimeType, verbose), getCharset(file.getName(), charset, verbose), verbose);
+    /**
+     * Generates a data URI from a file, outputting it to the given writer.
+     * @param file The file from which to generate the data URI.
+     * @param out Where to output the data URI.
+     * @param mimeType The MIME type to use for the data URI.
+     * @param charset The charset to use for the data URI.
+     * @throws java.io.IOException
+     */    
+    public static void generate(File file, Writer out, String mimeType, String charset) throws IOException {
+        generate(file, out, mimeType, charset, false);
     }
 
-    private static void generateImage(File file, Writer out, String mimeType, boolean verbose) throws IOException {
-        
-        //have to read images in using ImageIO to avoid encoding issues
-        String imageType = getImageType(file.getName());
-        BufferedImage image = ImageIO.read(file);
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        ImageIO.write(image, imageType, bytes);
-        bytes.flush();
-        byte[] rawBytes = bytes.toByteArray();
-        bytes.close();        
-        
-        if (verbose){
-            System.err.println("[INFO] Image is of type '" + imageType + "'.");
-        }      
-                
-        generateDataURI(rawBytes, out, getMimeType(file.getName(), mimeType, verbose), null, verbose);     
+    /**
+     * Generates a data URI from a file, outputting it to the given writer.
+     * @param file The file from which to generate the data URI.
+     * @param out Where to output the data URI.
+     * @param mimeType The MIME type to use for the data URI.
+     * @param charset The charset to use for the data URI.
+     * @param verbose Whether to display additional information.
+     * @throws java.io.IOException
+     */
+    public static void generate(File file, Writer out, String mimeType, String charset, boolean verbose) throws IOException {
+        generateDataURI(file, out, getMimeType(file.getName(), mimeType, verbose), getCharset(file.getName(), charset, verbose));
     }
+  
+    //--------------------------------------------------------------------------
+    // Generate data URIs from a file
+    //--------------------------------------------------------------------------
     
+    
+    
+    //--------------------------------------------------------------------------
+    // Helper methods
+    //--------------------------------------------------------------------------    
    
-    private static void generateDataURI(File file, Writer out, String mimeType, String charset, boolean verbose) throws IOException{
+    /**
+     * Generates a data URI from the specified file and outputs to the given writer.
+     * @param file The file to from which to create a data URI.
+     * @param out Where to output the data URI.
+     * @param mimeType The MIME type to specify in the data URI.
+     * @param charset The character set to specify in the data URI.
+     * @throws java.io.IOException
+     */
+    private static void generateDataURI(File file, Writer out, String mimeType, String charset) throws IOException{
         
         //read the bytes from the file
         InputStream in = new FileInputStream(file);
@@ -105,10 +160,18 @@ public class DataURIGenerator {
         in.close();        
         
         //actually write
-        generateDataURI(bytes, out, mimeType, charset, verbose);        
+        generateDataURI(bytes, out, mimeType, charset);        
     }
 
-    private static void generateDataURI(byte[] bytes, Writer out, String mimeType, String charset, boolean verbose) throws IOException {
+    /**
+     * Generates a data URI from a byte array and outputs to the given writer.
+     * @param bytes The array of bytes to output to the data URI.
+     * @param out Where to output the data URI.
+     * @param mimeType The MIME type to specify in the data URI.
+     * @param charset The character set to specify in the data URI.
+     * @throws java.io.IOException
+     */
+    private static void generateDataURI(byte[] bytes, Writer out, String mimeType, String charset) throws IOException {
         //create the output
         StringBuffer buffer = new StringBuffer();        
         buffer.append("data:");        
@@ -153,18 +216,17 @@ public class DataURIGenerator {
         
         return type;
     }
-    
-    private static String getImageType(String filename){
-        String type = getFileType(filename);
-        if (type.equals("gif")){
-            return "GIF";
-        } else if (type.equals("jpeg") || type.equals("jpg")){
-            return "JPEG";
-        } else {
-            return "PNG";
-        }
-    }
-    
+
+    /**
+     * Determines the MIME type to use for the given filename. If a MIME type
+     * is passed in, then that is used by default. Otherwise, the filename
+     * is inspected to determine the appropriate MIME type.
+     * @param filename The filename to check.
+     * @param mimeType The provided MIME type or null if nothing was provided.
+     * @param verbose Whether or not to display additional information
+     * @return The MIME type string to use for the filename.
+     * @throws java.io.IOException When no MIME type can be determined.
+     */
     private static String getMimeType(String filename, String mimeType, boolean verbose) throws IOException {
         if (mimeType == null){
             
@@ -187,6 +249,15 @@ public class DataURIGenerator {
         return mimeType;      
     }
     
+    /**
+     * Determines the charset to use for the given filename. If a charset is
+     * passed in, then that is used by default. If the filename represents an
+     * image, this method always returns null because no charset should be used.
+     * @param filename The filename to check. 
+     * @param charset The provided charset.
+     * @param verbose Whether or not to display additional information.
+     * @return The charset string or null if no charset should be used.
+     */
     private static String getCharset(String filename, String charset, boolean verbose) {
         if (charset != null){
             
