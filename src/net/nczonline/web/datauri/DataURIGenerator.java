@@ -32,7 +32,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
 
 /**
  * Generator for Data URIs.
@@ -96,20 +95,8 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */    
     public static void generate(File file, Writer out, String mimeType) throws IOException {
-        generate(file, out, null, null);        
-    }
-    
-    /**
-     * Generates a data URI from a file, outputting it to the given writer.
-     * @param file The file from which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param mimeType The MIME type to use for the data URI.
-     * @param charset The charset to use for the data URI.
-     * @throws java.io.IOException
-     */    
-    public static void generate(File file, Writer out, String mimeType, String charset) throws IOException {
-        generateDataURI(file, out, mimeType, charset);
-    }
+        generateDataURI(file, out, mimeType);        
+    }   
   
     //--------------------------------------------------------------------------
     // Generate data URIs from a URL
@@ -134,20 +121,8 @@ public class DataURIGenerator {
      * @throws java.io.IOException
      */    
     public static void generate(URL url, Writer out, String mimeType) throws IOException {
-        generate(url, out, null, null);        
+        generateDataURI(url, out, mimeType);        
     }
-    
-    /**
-     * Generates a data URI from a URL, outputting it to the given writer.
-     * @param url The URL form which to generate the data URI.
-     * @param out Where to output the data URI.
-     * @param mimeType The MIME type to use for the data URI.
-     * @param charset The charset to use for the data URI.
-     * @throws java.io.IOException
-     */    
-    public static void generate(URL url, Writer out, String mimeType, String charset) throws IOException {
-        generateDataURI(url, out, mimeType, charset);
-    }    
     
     //--------------------------------------------------------------------------
     // Helper methods
@@ -161,7 +136,7 @@ public class DataURIGenerator {
      * @param charset The character set to specify in the data URI.
      * @throws java.io.IOException
      */
-    private static void generateDataURI(File file, Writer out, String mimeType, String charset) throws IOException{
+    private static void generateDataURI(File file, Writer out, String mimeType) throws IOException{
         
         //read the bytes from the file
         InputStream in = new FileInputStream(file);
@@ -170,11 +145,10 @@ public class DataURIGenerator {
         in.close();  
         
         //verify MIME type and charset
-        mimeType = getMimeType(file.getName(), mimeType);
-        charset = getCharsetForFilename(file.getName(), charset);        
+        mimeType = getMimeType(file.getName(), mimeType);      
         
         //actually write
-        generateDataURI(bytes, out, mimeType, charset);        
+        generateDataURI(bytes, out, mimeType);        
     }
 
     /**
@@ -182,10 +156,9 @@ public class DataURIGenerator {
      * @param url The URL to from which to create a data URI.
      * @param out Where to output the data URI.
      * @param mimeType The MIME type to specify in the data URI.
-     * @param charset The character set to specify in the data URI.
      * @throws java.io.IOException
      */
-    private static void generateDataURI(URL url, Writer out, String mimeType, String charset) throws IOException{
+    private static void generateDataURI(URL url, Writer out, String mimeType) throws IOException{
         
         //get information about the URL
         URLConnection conn = url.openConnection();
@@ -194,30 +167,16 @@ public class DataURIGenerator {
         if (mimeType == null){            
             mimeType = getMimeType(url.getFile(), conn.getContentType());
             if (verbose){
-                System.err.println("[INFO] No MIME type provided, using '" + mimeType + "'.");
+                System.err.println("[INFO] No MIME type provided, using detected type of '" + mimeType + "'.");
             }            
         }
         
         //sometimes charset is in the MIME type
-        if (mimeType.indexOf("; charset=") > -1){
-            
-            //assign charset
-            if (charset == null){
-                charset = mimeType.substring(mimeType.indexOf("=") + 1);
-                if (verbose){
-                    System.err.println("[INFO] No charset provided, using '" + charset + "' (from MIME type).");
-                }                 
-            }
-            
-            //remove from MIME type
-            mimeType = mimeType.substring(0, mimeType.indexOf(";"));
-            if (verbose){
-                System.err.println("[INFO] Removed charset from MIME type, MIME type is now '" + mimeType + "'.");
-            }            
+        if (mimeType.indexOf("; charset=") > -1){                        
+            mimeType = mimeType.replace(" ", ""); //remove the space
+        } else {
+            mimeType = getMimeTypeWithCharset(mimeType);
         }
-        
-        //verify charset
-        charset = getCharsetForMIMEType(mimeType, charset);
         
         //read the bytes from the URL
         InputStream in = conn.getInputStream();       
@@ -232,7 +191,7 @@ public class DataURIGenerator {
         in.close();        
         
         //actually write
-        generateDataURI(byteStream.toByteArray(), out, mimeType, charset);        
+        generateDataURI(byteStream.toByteArray(), out, mimeType);        
     }
 
     /**
@@ -243,7 +202,7 @@ public class DataURIGenerator {
      * @param charset The character set to specify in the data URI.
      * @throws java.io.IOException
      */
-    private static void generateDataURI(byte[] bytes, Writer out, String mimeType, String charset) throws IOException {
+    private static void generateDataURI(byte[] bytes, Writer out, String mimeType) throws IOException {
         
         //create the output
         StringBuffer buffer = new StringBuffer();        
@@ -251,11 +210,6 @@ public class DataURIGenerator {
         
         //add MIME type        
         buffer.append(mimeType);
-        
-        //add charset if necessary
-        if (charset != null){
-            buffer.append(";charset=" + charset);
-        }
         
         //output base64-encoding
         buffer.append(";base64,");
@@ -308,7 +262,7 @@ public class DataURIGenerator {
             if (imageTypes.containsKey(type)){    
                 mimeType = (String) imageTypes.get(type);        
             } else if (textTypes.containsKey(type)){
-                mimeType = (String) textTypes.get(type);    
+                mimeType = (String) textTypes.get(type) + ";charset=UTF-8";    
             } else {
                 throw new IOException("No MIME type provided and MIME type couldn't be automatically determined.");                
             }
@@ -321,78 +275,20 @@ public class DataURIGenerator {
         return mimeType;      
     }
     
-    /**
-     * Determines the charset to use for the given filename. If a charset is
-     * passed in, then that is used by default. If the filename represents an
-     * image, this method always returns null because no charset should be used.
-     * @param filename The filename to check. 
-     * @param charset The provided charset.
-     * @return The charset string or null if no charset should be used.
-     */
-    private static String getCharsetForFilename(String filename, String charset) {
-        if (charset != null){
-            
-            if (Charset.isSupported(charset)){
-                
-                if (isImageFile(filename)){
-                    if (verbose){
-                        System.err.println("[INFO] Image file detected, skipping charset '" + charset + "'.");
-                    }             
-                    charset = null;
-                } else {
-                    if (verbose){
-                        System.err.println("[INFO] Using charset '" + charset + "'.");
-                    }                     
-                }
+    private static String getMimeTypeWithCharset(String mimeType){           
 
-                
-            } else {
-                charset = null;
-                if (verbose){
-                    System.err.println("[INFO] Charset '" + charset + "' is invalid, skipping.");
-                }                 
-            }
-           
+        if (imageTypes.containsValue(mimeType)){
+            if (verbose){
+                System.err.println("[INFO] Image file detected, skipping charset.");
+            }             
+            return mimeType;
         } else {
             if (verbose){
-                System.err.println("[INFO] Charset not specified, skipping.");
-            }
+                System.err.println("[INFO] Using charset 'UTF-8'.");
+            }   
+            return mimeType + ";charset=UTF-8";
         }
-        
-        return charset;
-    }
-    
-    private static String getCharsetForMIMEType(String mimeType, String charset){
-        if (charset != null){
-            
-            if (Charset.isSupported(charset)){
-                
-                if (imageTypes.containsValue(mimeType)){
-                    if (verbose){
-                        System.err.println("[INFO] Image file detected, skipping charset '" + charset + "'.");
-                    }             
-                    charset = null;
-                } else {
-                    if (verbose){
-                        System.err.println("[INFO] Using charset '" + charset + "'.");
-                    }                     
-                }
 
-                
-            } else {
-                charset = null;
-                if (verbose){
-                    System.err.println("[INFO] Charset '" + charset + "' is invalid, skipping.");
-                }                 
-            }
-           
-        } else {
-            if (verbose){
-                System.err.println("[INFO] Charset not specified, skipping.");
-            }
-        }
-        
-        return charset;        
     }
             
 }

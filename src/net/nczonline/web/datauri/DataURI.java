@@ -100,7 +100,7 @@ public class DataURI {
                 if (verbose){
                     System.err.println("[INFO] Output file is '" + (new File(outputFilename)).getAbsolutePath() + "'");
                 }
-                out = new OutputStreamWriter(new FileOutputStream(outputFilename), charset);
+                out = new OutputStreamWriter(new FileOutputStream(outputFilename), "UTF-8");
             }            
             
             //set verbose option
@@ -108,9 +108,9 @@ public class DataURI {
             
             //determine if the filename is a local file or a URL
             if (inputFilename.startsWith("http://")){
-                DataURIGenerator.generate(new URL(inputFilename), out, mimeType, charset);
+                DataURIGenerator.generate(new URL(inputFilename), out, mimeType);
             } else {
-                DataURIGenerator.generate(new File(inputFilename), out, mimeType, charset);
+                DataURIGenerator.generate(new File(inputFilename), out, mimeType);
             }          
             
         } catch (CmdLineParser.OptionException e) {
@@ -140,7 +140,7 @@ public class DataURI {
 
                         + "Global Options\n"
                         + "  -h, --help            Displays this information.\n"
-                        + "  --charset <charset>   Character set to encode into the data URI.\n"
+                        + "  --charset <charset>   Character set of the input file.\n"
                         + "  -v, --verbose         Display informational messages and warnings.\n"
                         + "  -m, --mime <type>     Mime type to encode into the data URI.\n"
                         + "  -o <file>             Place the output into <file>. Defaults to stdout.");
