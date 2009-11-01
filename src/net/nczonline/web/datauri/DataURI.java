@@ -136,7 +136,7 @@ public class DataURI {
      */
     private static void usage() {
         System.out.println(
-                "\nUsage: java -jar datauri-x.y.z.jar [options] [input files]\n\n"
+                "\nUsage: java -jar datauri-x.y.z.jar [options] [input file]\n\n"
 
                         + "Global Options\n"
                         + "  -h, --help            Displays this information.\n"
