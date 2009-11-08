@@ -20,7 +20,8 @@
                includes="**/*.java"
                deprecation="off"
                debug="on"
-               source="1.4">
+               target="${class.version}"
+               source="${class.version}">
             <classpath>
                 <pathelement location="${lib.dir}/jargs-1.0.jar"/>
             </classpath>
@@ -35,7 +36,7 @@
         </copy>
         <jar destfile="${build.dir}/${jar.name}" basedir="${build.dir}/jar">
             <manifest>
-                <attribute name="Main-Class" value="net.nczonline.web.datauri.DataURI"/>
+                <attribute name="Main-Class" value="${main.class}"/>
             </manifest>
         </jar>
     </target>
@@ -48,7 +49,7 @@
         </copy>        
         <jar destfile="${build.dir}/${core.jar.name}" basedir="${build.dir}/core-jar">
             <manifest>
-                <attribute name="Main-Class" value="net.nczonline.web.datauri.DataURI"/>
+                <attribute name="Main-Class" value="${main.class}"/>
             </manifest>
         </jar>
     </target>
